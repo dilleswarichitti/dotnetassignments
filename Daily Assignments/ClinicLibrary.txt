@@ -1,0 +1,481 @@
+namespace ClinicLibrary
+{
+    public class DoctorDetails
+    {
+        public static int Count;
+
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string specilization { get; set; }
+
+        public string PhoneNumber { get; set; }
+        public int Experience { get; set; }
+
+        public static void Add(int id, DoctorDetails doctor)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}
+    
+------------------------------------------------------------------------------------
+using ClinicLibrary;
+using System.Numerics;
+
+namespace DOCTORLibrary
+{
+    public interface IRepository
+    { 
+            public DoctorDetails AddDoctor(DoctorDetails doctor);
+            public DoctorDetails UpdateDoctor(DoctorDetails doctor);
+            public DoctorDetails  DeleteDoctor(int doctorId);
+            public DoctorDetails GetById(int doctorId);
+            List<DoctorDetails> GetDoctors();
+    }
+}
+--------------------------------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using ClinicLibrary;
+
+namespace DOCTORLibrary
+{
+    public class DoctorRepository : IRepository
+    {
+        Dictionary<int, DoctorDetails> doctors = new Dictionary<int, DoctorDetails>();
+        public DoctorDetails AddDoctor(DoctorDetails doctor)
+        {
+            int id = GetTheNextId();
+            try
+            {
+                DoctorDetails.Add(doctor.Id, doctor);
+                return doctor;
+            }
+            catch (ArgumentException e)
+            {
+                Console.WriteLine("The doctor Id already exists");
+                Console.WriteLine(e.Message);
+            }
+            return null;
+        }
+
+        private int GetTheNextId()
+        {
+            if (DoctorDetails.Count == 0)
+                return 1;
+            int id = doctors.Keys.Max();
+            return ++id;
+        }
+
+        public DoctorDetails DeleteDoctor(int doctorId)
+        {
+            doctors.Remove(doctorId);
+            return doctors[doctorId];
+        }
+
+        public List<DoctorDetails> GetDoctors()
+        {
+            var doctorList = doctors.Values.ToList();
+            return doctorList;
+        }
+        public DoctorDetails GetById(int doctorId)
+        {
+            if (doctors.ContainsKey(doctorId))
+                return doctors[doctorId];
+            return null;
+        }
+
+        public DoctorDetails UpdateDoctor(DoctorDetails doctor)
+        {
+            doctors[doctor.Id] = doctor;
+            return doctors[doctor.Id];
+        }
+    }
+}
+----------------------------------------------------------------------------------------
+using ClinicLibrary;
+using DOCTORLibrary;
+namespace DoctorLastLibrary
+{
+    public interface IDoctorService
+    {
+        public DoctorDetails AddDoctor(DoctorDetails doctor);
+        public DoctorDetails ModifyDoctorPhoneNumber(int doctorId, string newPhone);
+        public DoctorDetails ModifyDoctorExperience(int doctorId, int newExperience);
+        public DoctorDetails DeleteDoctor(int doctorId);
+        public DoctorDetails GetById(int id);
+        List<DoctorDetails> GetDoctors();
+
+    }
+}
+-------------------------------------------------------------------------------------------
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using ClinicLibrary;
+using DOCTORLibrary;
+
+namespace DoctorLastLibrary
+{
+    public class DoctorService : IDoctorService
+    {
+        IRepository repository;
+        public DoctorService()
+        {
+            repository = new DoctorRepository();
+        }
+        public DoctorDetails AddDoctor(DoctorDetails doctor)
+        {
+            var result = repository.AddDoctor(doctor);
+            if(result != null) 
+                return result;
+            throw new NotAddedException();
+        }
+
+        public DoctorDetails DeleteDoctor(int doctorId)
+        {
+            var doctor = GetById(doctorId);
+            if (doctor != null)
+            {
+                repository.DeleteDoctor(doctorId);
+                return doctor;
+            }
+            throw new DoctorNotFoundException();
+        }
+
+        public DoctorDetails GetById(int id)
+        {
+            var result = repository.GetById(id);
+            return result ?? throw new DoctorNotFoundException();
+        }
+
+        public List<DoctorDetails> GetDoctors()
+        {
+            var products = repository.GetDoctors();
+            if (GetDoctors().Count != 0)
+                return products;
+            throw new NoDoctorsAvailableException();
+        }
+
+        public DoctorDetails ModifyDoctorExperience(int doctorId, int newExperience)
+        {
+            var doctor = GetById(doctorId);
+            if (doctor != null)
+            {
+                doctor.Experience = newExperience;
+                return doctor;
+            }
+            throw new DoctorNotFoundException();
+        }
+
+        public DoctorDetails ModifyDoctorPhoneNumber(int doctorId, string newPhone)
+        {
+            var doctor = GetById(doctorId);
+            if (doctor != null)
+            {
+                doctor.PhoneNumber = newPhone;
+                return doctor;
+            }
+            throw new DoctorNotFoundException();
+        }
+    }
+}
+----------------------------------------------------------------------------------------------
+using System.Runtime.Serialization;
+
+namespace DoctorLastLibrary
+{
+    [Serializable]
+    public class NotAddedException : Exception
+    {
+        string message;
+        public NotAddedException()
+        {
+            message = "Product was not addedd.";
+        }
+        public override string Message => message;
+
+    }
+}
+---------------------------------------------------------------------------------------------------
+using System.Runtime.Serialization;
+
+namespace DoctorLastLibrary
+{
+    [Serializable]
+    public class NoDoctorsAvailableException : Exception
+    {
+        string message;
+        public NoDoctorsAvailableException()
+        {
+            message = "Doctors are not available currently";
+        }
+        public override string Message => message;
+
+    }
+}
+----------------------------------------------------------------------------------------------------------
+using System.Runtime.Serialization;
+
+namespace DoctorLastLibrary
+{
+    [Serializable]
+    public class DoctorNotFoundException : Exception
+    {
+        string message;
+        public DoctorNotFoundException()
+        {
+            message = "There is no Doctor with the given ID";
+        }
+
+        public override string Message => message;
+    }
+}
+--------------------------------------------------------------------------------------------------------------
+using ClinicLibrary;
+using DoctorLastLibrary;
+using DOCTORLibrary;
+using DOCTORLibrary;
+using System.ComponentModel.DataAnnotations;
+using System.Numerics;
+using System.Xml.Serialization;
+
+namespace ClinicDAYAPP
+{
+    internal class Program
+    {
+        IDoctorService doctorService;
+        public Program()
+        {
+            doctorService = new DoctorService();
+        }
+        class Usertype
+        {
+            static List<DoctorDetails> doctors = new List<DoctorDetails>();
+
+            static void Main(string[] args)
+            {
+                while (true)
+                {
+                    Console.WriteLine("Welcome to Clinic");
+                    Console.WriteLine("Select User Type: ");
+                    Console.WriteLine("1. Admin");
+                    Console.WriteLine("2. User");
+                    Console.WriteLine("0. Exit");
+
+                    string userTypeChoice = Console.ReadLine();
+
+                    switch (userTypeChoice)
+                    {
+                        case "0":
+                            Console.WriteLine("Thank You");
+                            break;
+                        case "1":
+                            AdminMenu();
+                            break;
+                        case "2":
+                            UserMenu();
+                            break;
+                        default:
+                            Console.WriteLine("Invalid choice. Please try again.");
+                            break;
+                    }
+                }
+
+
+                static void AdminMenu()
+                {
+                    Console.WriteLine("Admin Menu:");
+                    Console.WriteLine("1. Add Doctor");
+                    Console.WriteLine("2. Modify Doctor Phone");
+                    Console.WriteLine("3. Modify Doctor Experience");
+                    Console.WriteLine("4. Delete Doctor");
+                    Console.WriteLine("0. Exit to Menu");
+
+                    string adminChoice = Console.ReadLine();
+
+                    switch (adminChoice)
+                    {
+                        case "1":
+                            AddDoctor();
+                            break;
+                        case "2":
+                            ModifyDoctorPhone();
+                            break;
+                        case "3":
+                            ModifyDoctorExperience();
+                            break;
+                        case "4":
+                            DeleteDoctor();
+                            break;
+                        case "5":
+                            break;
+                        default:
+                            Console.WriteLine("Invalid choice. Please try again.");
+                            break;
+                    }
+                }
+
+                static void AddDoctor()
+                {
+
+                    DoctorDetails doctor = new DoctorDetails();
+
+                    Console.WriteLine("Enter Doctor Id: ");
+                    doctor.Id = Convert.ToInt32(Console.ReadLine());
+                    Console.WriteLine("Enter Doctor Name: ");
+                    doctor.Name = Console.ReadLine();
+                    Console.WriteLine("Enter Doctor Specilization: ");
+                    doctor.specilization = Console.ReadLine();
+                    Console.WriteLine("Enter Doctor Experience: ");
+                    doctor.Experience = Convert.ToInt32(Console.ReadLine());
+                    Console.WriteLine("Enter Doctor PhoneNumber: ");
+                    doctor.PhoneNumber = Console.ReadLine();
+                    try
+                    {
+                        DoctorService doctorService = new DoctorService();
+                        var result = doctorService.AddDoctor(doctor);
+                        if (result != null)
+                        {
+                            Console.WriteLine("Doctor added");
+                        }
+                    }
+                    catch (FormatException e)
+                    {
+                        Console.WriteLine(e.Message);
+
+                    }
+                    catch (NotAddedException e)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
+                }
+
+                static int GetDoctorIdFromUser()
+                {
+                    int id;
+                    Console.WriteLine("Please enter the Doctor id: ");
+                    id = Convert.ToInt32(Console.ReadLine());
+                    return id;
+                }
+                private static void DeleteDoctor()
+                {
+                    try
+                    {
+                        int id = GetDoctorIdFromUser();
+                        DoctorService doctorService = new DoctorService();
+                        if (doctorService.DeleteDoctor(doctorId) != null)
+                            Console.WriteLine("Doctor deleted");
+                    }
+                    catch (DoctorNotFoundException e)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
+                }
+                private static void ModifyDoctorExperience()
+                {
+                    int id = GetDoctorIdFromUser();
+                    Console.WriteLine("Enter the new Experience: ");
+                    int experience = Convert.ToInt32(Console.ReadLine());
+                    DoctorDetails doctor = new DoctorDetails();
+                    doctor.Experience = experience;
+                    doctor.Id = id;
+                    try
+                    {
+                        DoctorService doctorService = new DoctorService();
+                        var result = doctorService.ModifyDoctorExperience(id, experience);
+                        if (result != null)
+                            Console.WriteLine("modified successfully");
+
+                    }
+                    catch (DoctorNotFoundException e)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
+                }
+
+                private static void ModifyDoctorPhone()
+                {
+                    int id = GetDoctorIdFromUser();
+                    Console.WriteLine("Enter the new PhoneNumber: ");
+                    string PhoneNumber = Console.ReadLine();
+                    DoctorDetails doctor = new DoctorDetails();
+                    doctor.PhoneNumber = PhoneNumber;
+                    doctor.Id = id;
+                    try
+                    {
+                        DoctorService doctorService = new DoctorService();
+                        var result = doctorService.ModifyDoctorPhoneNumber(id, PhoneNumber);
+                        if (result != null)
+                            Console.WriteLine("modified successfully");
+
+                    }
+                    catch (DoctorNotFoundException e)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
+                }
+                static void UserMenu()
+                {
+                    Console.WriteLine("User Menu:");
+                    Console.WriteLine("1. View Doctors");
+                    Console.WriteLine("2. Book Appointment");
+                    Console.WriteLine("3. Return to Main Menu");
+
+                    string userChoice = Console.ReadLine();
+
+                    switch (userChoice)
+                    {
+                        case "1":
+                            ViewDoctors();
+                            break;
+                        case "2":
+                            BookAppointment();
+                            break;
+                        case "3":
+                            break;
+                        default:
+                            Console.WriteLine("Invalid choice. Please try again.");
+                            break;
+                    }
+                }
+
+                static void ViewDoctors()
+                {
+                    try { 
+                    if (doctors.Count != 0) 
+                    Console.WriteLine("List of Doctors:");
+                    foreach (var doctor in doctors)
+                        Console.WriteLine($"Id: {doctor.Id},Name: {doctor.Name},Specilization: {doctor.specilization}, Phone: {doctor.PhoneNumber}, Experience: {doctor.Experience}");
+                    }
+                    catch (NoDoctorsAvailableException e)
+                    {
+                        Console.WriteLine(e.Message);
+                    }
+                }
+
+                static void BookAppointment()
+                {
+                    int id = GetDoctorIdFromUser();
+                    Console.Write("Enter the appointment date and time: ");
+                    string appointmentDateTime = Console.ReadLine();
+                   try
+                   {
+                             if (doctors != null)
+                            Console.WriteLine($"Appointment booked with {doctors} on {appointmentDateTime}.");
+                   }
+                    catch (NoDoctorsAvailableException e)
+                   {
+                        Console.WriteLine(e.Message);
+                    }
+                }
+            }
+        }
+    }
+}

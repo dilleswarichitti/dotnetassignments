@@ -1,0 +1,93 @@
+--print the store name, title name,, quantity, sale amount, pulisher name, author name for all the sales. Also print those books which have not been sold and authors who have not written.
+
+select st.stor_name 'Store Name', t.title 'Book Name', s.qty 'Quantity', Sum(s.qty) *Sum(t.price) 'Sale Amount',p.pub_name 'Publisher Name',concat(a.au_fname,' ',a.au_lname) 'Author Name'
+from stores st join sales s on st.stor_id = s.stor_id
+join titles t on t.title_id = s.title_id
+join titleauthor ta on ta.title_id = t.title_id
+join authors a on a.au_id = ta.au_id
+join Publishers p on p.pub_id = t.pub_id
+group by st.stor_name,t.title,s.qty,p.pub_name,a.au_fname,a.au_lname
+
+--Create a stored procedure that will take the author name and print the total sales amount for all the books authored by him/her
+-- Note : - If there are no books sold then print "Sale yet to gear up"
+
+create proc proc_Getauthorsales(@authorname varchar(50))
+as
+begin
+    declare @totalsales float
+    set @totalsales = (select (sum(s.qty * t.price)) from authors a
+                       join titleauthor ta on a.au_id = ta.au_id
+                       join titles t on ta.title_id = t.title_id
+                       join sales s on t.title_id = s.title_id
+                       where concat(a.au_lname,'',a.au_fname) = @authorName)
+    if @totalsales > 0
+    begin
+        print '@totalsales by author ' +@authorname
+    end
+    else
+    begin
+        print 'Sales yet to gear up'
+    end
+end
+exec proc_Getauthorsales 'Author Name'
+
+--print the details of the sale when the sale quantity is greater than the sale quantity of all the same titles sold in the same store
+
+select s.stor_id 'Store id',s.title_id 'title id',t.title 'Title', s.qty 'Quantity', s.ord_date 'order date'
+from sales s
+join(select s.stor_id,s.title_id,max(s.qty) as max_qty
+    from sales s group by s.stor_id, s.title_id)
+	max_sale_qty on s.stor_id = max_sale_qty.stor_id
+    and s.title_id = max_sale_qty.title_id
+    and s.qty > max_sale_qty.max_qty
+   join titles t on s.title_id = t.title_id
+
+--Print the average price of every author's books withthe author's full name
+
+select concat(a.au_fname,'',a.au_lname) 'author full name', AVG(t.price) 'AVG price'
+from authors a join titleauthor ta
+on a.au_id = ta.au_id join titles t
+on ta.title_id = t.title_id 
+group by concat(a.au_fname,'',a.au_lname)
+
+
+--Print the schema of the titles table and locate all the constrants
+
+select constraint_name, constraint_type
+from information_schema.table_constraints
+where table_name = 'titles'
+
+--Create a procedure that will take the price and prints the count of book that are priced less than that
+
+create proc proc_Bookcount(@Price float)
+as
+begin
+    select count(*) as BookCount
+    from titles
+    where price < @Price;
+end
+exec proc_Bookcount @Price = 15.00
+
+--Find a way to ensure that the price of books are not updated if the price is below 7
+create trigger updateprice
+on titles
+instead of update
+as
+begin
+    if update(price)  
+    begin
+        if exists (select * from inserted where price < 7)
+            print 'Price of books cannot be updated below 7.'
+        end
+        else
+        begin
+            update titles
+            set titles.price = inserted.price
+            from titles
+            join inserted ON titles.title_id = inserted.title_id;
+        end
+    end
+end
+
+--print the books that have 'e' and 'a' in their name
+select title from titles where title  like '%e%' and title like '%a%'

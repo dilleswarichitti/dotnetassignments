@@ -1,0 +1,157 @@
+PROBLEM 1 :
+
+namespace dotnetapp
+{
+    internal class Program
+    {
+       
+        static void AddTwoNumbers()
+        {
+            int number1, number2;
+            number1 = GetARandomNumber();
+            number2 = GetARandomNumber();
+            int sum = number1 + number2;
+            Console.WriteLine($"The sum of {number1} and {number2} is {sum}");
+        }
+        static void Main(string[] args)
+        { 
+            AddTwoNumbers();
+
+        }
+    }
+}
+
+
+PROBLEM 2:
+
+namespace project_2
+{
+    internal class Program
+    {
+        static void BiggerNumber()
+        {
+            int num1;
+            Console.WriteLine("Please enter your first number");
+            num1 = Convert.ToInt32(Console.ReadLine());
+            int num2;
+            Console.WriteLine("Please enter your second number");
+            num2 = Convert.ToInt32(Console.ReadLine());
+
+            if (num1 > num2)
+                Console.WriteLine($"max number is {num1}");
+            else
+                Console.WriteLine($"max number is {num2}");
+
+            }
+        static void Main(string[] args)
+        {
+            BiggerNumber();
+        }
+    }
+}
+
+
+PROBLEM 3:
+
+namespace Project3
+{
+    internal class Program
+    {
+        static void Checkeven()
+        {
+            int num;
+            Console.WriteLine("Please enter a number");
+            num = Convert.ToInt32(Console.ReadLine());
+            if (num % 2 == 0)
+                Console.WriteLine($"The given {num} is even");
+            else
+                Console.WriteLine($"The given {num} is odd");
+
+        }
+        static void Main(string[] args)
+        {
+            Checkeven();
+        }
+    }
+}
+
+PROBLEM 4 :
+
+namespace Project_4
+{
+    internal class Program
+    {
+        static void checkprime()
+        {
+            int count = 0;
+            int num;
+            Console.WriteLine("Please enter a number");
+            num = Convert.ToInt32(Console.ReadLine());
+            for (int i = 1; i <= num; i++) {
+                if (num % i == 0) {
+                    count++;
+                }
+            }
+            if (count == 2)
+                Console.WriteLine($"The given {num} is Prime");
+            else
+                Console.WriteLine($"The given {num} is Not Prime");
+
+        }
+        static void Main(string[] args)
+        {
+            checkprime();
+        }
+    }
+}
+
+PROBLEM 5:
+
+namespace Project_5
+{
+    internal class Program
+    {
+        static void PerfectSquare()
+        {
+            int num;
+            Console.WriteLine("Please enter a number");
+            num = Convert.ToInt32(Console.ReadLine());
+            double Sqrtnum = Math.Sqrt(num);
+            Console.WriteLine($"The square root of {num} is " +Sqrtnum);
+        }
+        static void Main(string[] args)
+        {
+                PerfectSquare();
+        }
+    }
+}
+
+PROBLEM 6:
+
+namespace Project_6
+{
+    internal class Program
+    {
+        static void AvgOfNum()
+        {
+            int i, num;
+            double avg;
+            Console.WriteLine("Enter your 10 numbers: \n");
+            for (i = 1; i <= 10; i++)
+            {
+                Console.WriteLine(" Number {0} : ", i);
+                num = Convert.ToInt32((Console.ReadLine() + i));
+            }
+                avg = i / 10;
+            Console.WriteLine("The average of 10 numbers is : " + avg);
+
+        }
+        static void Main(string[] args)
+        {
+            AvgOfNum();
+        }
+    }
+}
+
+
+
